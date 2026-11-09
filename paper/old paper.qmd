@@ -1,0 +1,49 @@
+---
+title: "The Effects of Minimum Wage Increases on Labor Market Outcomes: A Comparison of MANOVA and Multiple ANOVAs"
+subtitle: "Subtitle"
+author: "Your Name"
+thanks: "Project repository available at: [https://github.com/peteragao/MATH261A-project-template](https://github.com/peteragao/MATH261A-project-template)."
+date: today
+date-format: long
+abstract: "Abstract here."
+format: pdf
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+```
+
+# Introduction
+
+"Do Principal Component Analysis loadings reveal underlying relationships among U.S. macroeconomic indicators that correspond to predefined economic categories in the FRED-MD dataset?"
+
+You can investigate three things:
+
+Do variables from the same FRED category have similar loading patterns?
+
+Do individual principal components capture multiple economic categories?
+
+Are some categories more strongly represented by particular principal components?
+
+Suppose you discover that five industrial production indicators are extremely highly correlated.
+PCA might summarize these five indicators using one component.
+That is useful for dimensionality reduction, but the result might not reveal anything particularly surprising: the indicators already measure closely related aspects of industrial production.
+
+# Data
+
+The FRED-MD dataset is a monthly macroeconomic dataset containing a large number of U.S. economic indicators
+
+The correlation analysis identifies a substantial negative association between industrial production growth and changes in unemployment. This demonstrates the benefit of examining economic indicators jointly rather than relying exclusively on individual univariate analysis.
+
+# Methods
+
+# Results
+
+# Discussion
+
+# References

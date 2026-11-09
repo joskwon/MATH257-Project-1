@@ -1,0 +1,300 @@
+---
+title: "data cleaning"
+format: pdf
+editor: visual
+---
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(readr)
+library(dplyr)
+library(tidyverse)
+library(corrplot)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+#data("penguins")
+
+
+FRED_MD <- read_csv("2026-10-MD.csv")
+
+# Remove rows containing metadata
+macro <- FRED_MD %>%
+  slice(-1) %>%
+  mutate(sasdate = as.Date(sasdate, format = "%m/%d/%Y"))
+```
+
+```{r}
+# Visualization of variables over time 
+macro %>%
+  select(sasdate, INDPRO, UNRATE, CPIAUCSL, HOUST) %>%
+  pivot_longer(
+    -sasdate,
+    names_to = "variable",
+    values_to = "value"
+  ) %>%
+  ggplot(aes(sasdate, value)) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  labs(
+    title = "Evolution of Selected U.S. Economic Indicators",
+    x = "Date",
+    y = "Value"
+  ) +
+  theme_classic()
+```
+
+```{r}
+#FRED-MD transformation function
+transform_variable <- function(x, code) {
+
+  if (code == 1) {
+    return(x)
+  }
+
+  if (code == 2) {
+    return(c(NA, diff(x)))
+  }
+
+  if (code == 4) {
+    return(log(x))
+  }
+
+  if (code == 5) {
+    return(c(NA, diff(log(x))))
+  }
+
+  if (code == 6) {
+    return(c(NA, NA, diff(log(x), differences = 2)))
+  }
+
+  if (code == 7) {
+    growth <- c(NA, diff(x) / head(x, -1))
+    return(c(NA, diff(growth)))
+  }
+}
+```
+
+```{r}
+#Apply transformations
+X_transformed <- as.data.frame(
+  Map(
+    transform_variable,
+    X_raw,
+    transform_codes
+  )
+)
+
+names(X_transformed) <- names(X_raw)
+
+dim(X_transformed)
+```
+
+```{r}
+FRED_MD %>%
+  slice(1) %>%
+  select(sasdate, INDPRO, UNRATE, CPIAUCSL, HOUST)
+```
+
+```{r}
+# Visualize trends with recommended transformations applied
+macro_transformed <- macro %>%
+  mutate(
+    INDPRO = c(NA, diff(log(INDPRO))),
+    UNRATE = c(NA, diff(UNRATE)),
+    CPIAUCSL = c(NA, NA, diff(log(CPIAUCSL), differences = 2)),
+    HOUST = log(HOUST)
+  )
+
+macro_transformed %>%
+  select(sasdate, INDPRO, UNRATE, CPIAUCSL, HOUST) %>%
+  pivot_longer(
+    -sasdate,
+    names_to = "variable",
+    values_to = "value"
+  ) %>%
+  ggplot(aes(sasdate, value)) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y") +
+  theme_classic() +
+  labs(
+    title = "Transformed Economic Indicators",
+    x = "Date",
+    y = "Transformed value"
+  )
+```
+
+```{r}
+# Create the correlation matrix
+cor_data <- macro_transformed %>%
+  select(INDPRO, UNRATE, CPIAUCSL, HOUST)
+
+cor_matrix <- cor(
+  cor_data,
+  use = "pairwise.complete.obs"
+)
+
+round(cor_matrix, 3)
+```
+
+```{r}
+# Visualize the correlation matrix
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper",
+  addCoef.col = "black",
+  tl.col = "black",
+  tl.srt = 45
+)
+```
+
+```{r}
+# Extract transformation codes
+transform_codes <- FRED_MD %>%
+  slice(1) %>%
+  select(-sasdate) %>%
+  unlist() %>%
+  as.numeric()
+
+names(transform_codes) <- names(macro)[-1]
+```
+
+```{r}
+macro_transformed <- as.data.frame(
+  Map(
+    transform_variable,
+    macro %>% select(-sasdate),
+    transform_codes
+  )
+)
+
+names(macro_transformed) <- names(macro)[-1]
+
+macro_transformed$sasdate <- macro$sasdate
+```
+
+```{r}
+# Observe missing values
+missing_summary <- macro_transformed %>%
+  select(-sasdate) %>%
+  summarise(across(everything(), ~sum(is.na(.)))) %>%
+  pivot_longer(
+    everything(),
+    names_to = "variable",
+    values_to = "missing"
+  ) %>%
+  arrange(desc(missing))
+
+head(missing_summary, 15)
+```
+
+```{r}
+# Observe where missing values are
+macro_transformed %>%
+  summarise(
+    across(
+      c(ACOGNO, UMCSENTx, TWEXAFEGSMTHx,
+        ANDENOx, VIXCLSx, PERMIT),
+      ~which(is.na(.))[1],
+      .names = "{.col}_first_missing"
+    )
+  )
+```
+
+```{r}
+macro_transformed %>%
+  summarise(
+    across(
+      c(ACOGNO, UMCSENTx, TWEXAFEGSMTHx,
+        ANDENOx, VIXCLSx, PERMIT),
+      ~which(!is.na(.))[1],
+      .names = "{.col}_first_available"
+    )
+  )
+```
+
+```{r}
+pca_data <- macro_transformed %>%
+  select(-sasdate, -ACOGNO, -UMCSENTx, -TWEXAFEGSMTHx) %>%
+  filter(if_all(everything(), ~ !is.na(.)))
+```
+
+```{r}
+pca_scaled <- scale(pca_data)
+
+mean(pca_scaled[,1])
+sd(pca_scaled[,1])
+```
+```{r}
+pca_result <- prcomp(
+  pca_scaled,
+  center = FALSE,
+  scale. = FALSE
+)
+
+summary(pca_result)
+```
+
+```{r}
+scree_data <- data.frame(
+  PC = 1:length(pca_result$sdev),
+  Eigenvalue = pca_result$sdev^2
+)
+
+ggplot(scree_data, aes(x = PC, y = Eigenvalue)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "PCA Scree Plot",
+    x = "Principal Component",
+    y = "Eigenvalue"
+  ) +
+  theme_classic()
+```
+
+```{r}
+eigenvalues <- pca_result$sdev^2
+
+sum(eigenvalues > 1)
+
+which(cumsum(pca_result$sdev^2 /
+               sum(pca_result$sdev^2)) >= 0.70)[1]
+```
+
+```{r}
+loadings <- as.data.frame(
+  pca_result$rotation[, 1:9]
+)
+
+loadings$variable <- rownames(loadings)
+```
+
+```{r}
+loadings %>%
+  arrange(desc(abs(PC1))) %>%
+  select(variable, PC1) %>%
+  head(15)
+```
+
+```{r}
+fred_groups <- tibble(
+  variable = c(
+    "IPMANSICS", "PAYEMS", "INDPRO", "IPFPNSS",
+    "CUMFNS", "USGOOD", "IPDMAT", "MANEMP",
+    "CPIAUCSL", "CUSR0000SAC", "CUSR0000SA0L2",
+    "PCEPI",
+    "BAAFFM", "AAAFFM", "T10YFFM", "T5YFFM",
+    "HOUST", "HOUSTW", "PERMIT", "PERMITW"
+  ),
+
+  group = c(
+    1, 2, 1, 1,
+    1, 2, 1, 2,
+    7, 7, 7, 7,
+    6, 6, 6, 6,
+    3, 3, 3, 3
+  )
+)
+```
+
