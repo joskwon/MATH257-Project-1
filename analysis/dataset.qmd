@@ -1,0 +1,22 @@
+---
+title: "dataset"
+format: html
+---
+
+```{r}
+data("penguins")
+
+penguins_clean <- penguins %>%
+  select(species, bill_length_mm, bill_depth_mm,
+         flipper_length_mm, body_mass_g) %>%
+  na.omit()
+```
+
+```{r}
+write.csv(
+  penguins_clean,
+  "../data/penguins.csv",
+  row.names = FALSE
+)
+```
+

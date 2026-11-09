@@ -2,7 +2,7 @@
 
 ## Data 
 
-Data used in this project is obtained from [San Francisco Open Data](https://data.sfgov.org) who provide the data under the [Open Data Commons Public Domain Dedication and License](https://opendatacommons.org/licenses/pddl/1-0/).
+Data used in this project is obtained from the [UC Irvine Machine Learning Repository](https://archive.ics.uci.edu/dataset/690/palmer+penguins-3) who provide the data under the [CC0 1.0 Universal](https://allisonhorst.github.io/palmerpenguins/LICENSE.html).
 
 ## External Resources
 
