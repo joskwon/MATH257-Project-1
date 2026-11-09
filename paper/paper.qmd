@@ -5,7 +5,6 @@ author: "Joshua Kwon"
 thanks: "Project repository available at: [https://github.com/peteragao/MATH261A-project-template](https://github.com/peteragao/MATH261A-project-template)."
 date: today
 date-format: long
-abstract: "Abstract here."
 format: pdf
 bibliography: references.bib
 execute:
@@ -33,7 +32,13 @@ penguins <- read.csv("../data/penguins.csv")
 
 # Introduction
 
-"Do different penguin species differ in their overall physical characteristics, and does MANOVA provide additional insight compared with conducting separate univariate ANOVAs?"
+When analyzing data with multiple related outcome variables, researchers must decide whether to examine each variable independently or consider them simultaneously. Univariate methods, like ANOVA, are used to evaluate differences in individual dependent variables; however, when several dependent variables are related, analyzing them separately may overlook relationships between variables and inflate the risk of Type I errors from conducting multiple hypothesis tests. Multivariate ANOVA, or MANOVA, lets you evaluate group differences across multiple dependent variables simultaneously. This paper explores how inference using MANOVA compares with conducting multiple univariate ANOVAs and what benefits multivariate analysis can provide.
+
+This study uses the Palmer Penguins dataset, which contains physical measurements from three Antarctic penguin species Adelie, Chinstrap, and Gentoo. This analysis focuses on four physical characteristic measurements bill length, bill depth, flipper length, and body mass, with penguin species serving as the independent variable. These measurements let us examine differences between species while also accounting for correlations among multiple physical characteristics.
+
+This paper uses two approaches. First, I use four separate one-way univariate ANOVAs to determine whether the mean of each physical measurement differs across the three penguin species. Next, a one-way MANOVA is performed to evaluate whether the species differ in their combined physical measurements while accounting for the covariance between dependent variables. By comparing the statistical significance and conclusions of these methods, I examine the differences between evaluating individual outcomes independently and multiple related outcomes simultaneously.
+
+The results indicate statistically significant differences among the three penguin species for all four individual physical measurements. The MANOVA test also identifies a statistically significant difference in the combined physical measurements across species using Pillai's Trace. These findings demonstrate that both approaches identify differences between species, but provide different perspectives on those differences. Overall, this case study illustrates how MANOVA can provide a broader understanding of group differences when multiple related outcome variables are being investigated, complementing the more specific information provided by separate univariate ANOVAs.
 
 # Data
 
@@ -43,7 +48,7 @@ From the provided dataset I select for the three species of Antarctic penguins, 
 
 First we observe the dataset in @tbl-summary. At a glance, we can see that there are some similarities between the species. Bill depth, flipper length, and body mass of Adelie and Chinstrap penguins are more similar with each other than with Gentoo. However, Chinstrap and Gentoo penguins share a similar mean bill length. Additionally, note the smaller sample size of Chinstrap penguins. If we also have unequal covariance matrices, this may affect the reliability of our MANOVA results.
 
-```{r, summary}
+```{r}
 #| label: tbl-summary
 #| tbl-cap: "Summary Statistics of Key Variable Means and Sample Size by Species"
 
@@ -59,7 +64,6 @@ summary <- penguins %>%
 
 knitr::kable(
   summary %>% mutate(across(where(is.numeric), ~round(.x, 3))),
-  caption = "Summary Statistics of Penguin Measurements",
   booktabs = TRUE
 )
 ```
@@ -110,7 +114,6 @@ cor_matrix <- cor(
 
 knitr::kable(
   round(cor_matrix, 3),
-  caption = "Correlation Matrix of Penguin Measurements",
   digits = 3,
   booktabs = TRUE
 )
@@ -119,25 +122,30 @@ knitr::kable(
 
 # Methods
 
-In order to investigate whether penguin species differ in their physical measurements I will consider four characteristics simultaneously: bill length, bill depth, flipper length, and body mass. First, I will start with four separate one-way ANOVAs tested on each of the four characteristics. The four one-way ANOVAs will test whether penguin species differ across bill length, bill depth, flipper length, and body mass simultaneously. Each ANOVA tests whether the mean of one dependent variable differs across the three species groups. The general one-way ANOVA model is $$Y_{ij} = \mu + \alpha_i + \epsilon_{ij} $$ where $Y_{ij}$ is the observed measurement for penguin $j$ for species $i$. $\mu$ is the overall population mean. $\alpha_i$ is the effect of the $i$-th species. $\epsilon_{ij}$ is the random error associated with each observation. This error tern is assumed to be independently and normally distributed with mean zero and variance $\epsilon_{ij} \sim N(0,\sigma^2)$. For ANOVA, we assume independence of observations, normality of residuals, and homogeneous population variance.
+In order to investigate whether penguin species differ in their physical measurements, I will consider four characteristics simultaneously: bill length, bill depth, flipper length, and body mass. First, I will perform four separate one-way univariate ANOVAs on each of the four characteristics. The four one-way ANOVAs will test whether penguin species differ in mean bill length, bill depth, flipper length, and body mass. Each ANOVA tests whether the mean of one dependent variable differs across the three species groups. The general one-way ANOVA model is $$Y_{ij} = \mu + \alpha_i + \epsilon_{ij} $$ where $Y_{ij}$ is the observed measurement for penguin $j$ for species $i$. $\mu$ is the overall population mean. $\alpha_i$ is the effect of the $i$-th species. $\epsilon_{ij}$ is the random error associated with each observation. This error term is assumed to be independently and normally distributed with mean zero and variance $\epsilon_{ij} \sim N(0,\sigma^2)$. For ANOVA, we assume independence of observations, normality of residuals, and homogeneous population variance.
 
 
-For each of the individual univariate ANOVAs, I will have a set of hypotheses for a total of four. My Null Hypothesis for each characteristic will be $$H_0: \mu_{Adelie}=\mu_{Chinstrap}=\mu_{Gentoo}$$ with an alternative hypothesis of $$ H_A: At \enspace least \enspace one \enspace species \enspace mean \enspace differs $$
+For each of the individual univariate ANOVAs, I will have a set of hypotheses. The Null Hypothesis for each states that all three species have equal population means for the respective characteristic. $$H_0: \mu_{Adelie}=\mu_{Chinstrap}=\mu_{Gentoo}$$ The alternative hypothesis states that at least one species mean differs $$ H_A: At \enspace least \enspace one \enspace species \enspace mean \enspace differs $$
 
-With Anova, we can see which specific aspect variables differ since each variable gets its own
-p-value. The limitation is that each ANOVA examines one outcome independently. This means we aren't directly testing whether penguin species affects the overall combination of physical characteristics. Additionally, with multiple tests, we inflate the risk of type 1 errors. Because of this, I will use MANOVA which considers all four dependent variables simultaneously. MANOVA tests whether the three penguin species have significantly different multivariate mean vectors; however, it does not identify which specific measurements differ.
+With Anova, we can see which specific physical characteristic differ between species through each individual p-value. The limitation is that each ANOVA examines one outcome independently. This means we do not directly test whether penguin species differ in their overall combination of physical characteristics. Additionally, performing multiple tests, inflates the risk of Type I errors. To address this, I will perform MANOVA, which considers all four dependent variables simultaneously. 
 
-The general one-way MANOVA model is $$\mathbf{Y}_{ij} = \mathbf{\mu} + \mathbf{\alpha}_i + \mathbf{\epsilon}_{ij} $$ where $\mathbf{Y}_{ij}$ is the vector of the four observed measurement for penjuin $j$ in species $i$. $\mathbf{\mu}$ is the overall multivariate population mean vector. $\mathbf{\alpha}_i$ is the multivariate effect of species $i$. $\mathbf{\epsilon}_{ij}$ is the vector of random errors. The $\mathbf{\epsilon}_{ij}$ are independent $N_4(0,\Sigma)$ where $\Sigma$ is the common covariance matrix.
+MANOVA evaluates whether the three penguin species have significantly different multivariate mean vectors. Unlike with separate ANOVAs, it accounts for the covariance between dependent variables when evaluating overall group differences. However, MANOVA does not identify which specific measurements differ.
 
-Since MANOVA evaluates the combined mean vectors, we have the null hypothesis which states that all three species have equal population mean vectors $$H_0:\mu_{Adelie}=\mu_{Chinstrap}=\mu_{Gentoo}$$ and the alternative hypothesis $$ H_A: At \enspace least \enspace one \enspace mean \enspace vector \enspace differs$$
+The general one-way MANOVA model is $$\mathbf{Y}_{ij} = \mathbf{\mu} + \mathbf{\alpha}_i + \mathbf{\epsilon}_{ij} $$ where $\mathbf{Y}_{ij}$ is the vector of the four observed measurement for penjuin $j$ in species $i$. $\mathbf{\mu}$ is the overall multivariate population mean vector. $\mathbf{\alpha}_i$ is the multivariate effect of species $i$. $\mathbf{\epsilon}_{ij}$ is the vector of random errors. The $\mathbf{\epsilon}_{ij}$ are independent $N_4(0,\Sigma)$ where $\Sigma$ is the common covariance matrix. Pillai's Trace is selected as the primary MANOVA test statistic due to its relative robustness to certain violations of MANOVA assumptions.
+
+Since MANOVA evaluates the combined mean vectors, the null hypothesis states that all three species have equal population mean vectors $$H_0:\mu_{Adelie}=\mu_{Chinstrap}=\mu_{Gentoo}$$ The alternative hypothesis states that at least one mean vector differs $$ H_A: At \enspace least \enspace one \enspace mean \enspace vector \enspace differs$$
 
 For MANOVA, we assume independence of observations, a common covariance matrix, and that each population is multivariate normal.
 
 One assumption made when comparing two or more multivariate mean vectors is that the covariance matrices of the populations are the same. One test for equal covariance matrices is Box's M-test. The null hypothesis is that the covariance matrix for each of the populations are equal to each other and to the common covariance matrix. $$ H_0:\Sigma_1=\Sigma_2=\Sigma_3=\Sigma$$ The alternative hypothesis is that at least two of the covariance matrices are not equal. I will use this test to evaluate the common covariance matrix assumption at the end.
 
+To compare the univariate and multivariate approaches, I will examine the statistical significance of the four individual ANOVA tests alongside the overall MANOVA result using Pillai's Trace. I will then compare whether the conclusions from the individual measurements are consistent with the overall multivariate conclusion. This comparison will demonstrate the differences between examining each physical measurement independently and evaluating all four measurements simultaneously.
+
 # Results
 
 ```{r}
+#| label: uni_anova
+#| tbl-cap: One-Way ANOVA Results by Penguin Species
 # Four univariate ANOVA
 anova_bill_length <- aov(bill_length_mm ~ species, data = penguins)
 anova_bill_depth <- aov(bill_depth_mm ~ species, data = penguins)
@@ -179,7 +187,7 @@ anova_table <- bind_rows(
       TRUE ~ ""
     )
   ) %>%
-  select(
+  dplyr::select(
     Variable,
     df,
     F_statistic,
@@ -196,16 +204,20 @@ knitr::kable(
     "P-value",
     "Significance"
   ),
-  caption = "One-Way ANOVA Results by Penguin Species",
   booktabs = TRUE
 )
 ```
 
-If the p-value associated with Pillai's Trace is below 0.05, you reject the null hypothesis.
+Four separate one-way ANOVAs were conducted to determine whether mean bill length, bill depth, flipper length, and body mass differed across the three penguin species.
 
-This indicates that the penguin species differ significantly in their combined physical characteristics.
+The results in @uni_anova show that all four physical characteristics showed statistically significant differences across the three penguin species. Bill length difference by species was significant at the 0.05 level, with an F-Statistic of 410.600 and a p-value < 2e-16. Similarly, bill depth showed a significant difference with an F-Statistic of 359.789 and a p-value < 2e-16. Flipper length also differed significantly across species with an F-Statistic of 594.802 and a p-value < 2e-16. Finally, body mass showed a statistically significant difference with an F-Statistic of 343.626 and a p-value < 2e-16.
+
+These findings suggest that penguin species differ in each of the four physical characteristics and we reject the null hypothesis that all three species have equal population means for each physical characteristic. However, conducting separate ANOVAs does not directly evaluate whether species differ in their combined physical measurements.
+
 
 ```{r}
+#| label: manova
+#| tbl-cap: MANOVA Results Using Pillai's Trace
 # Mulitivariate MANOVA
 manova_model <- manova(
   cbind(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g) ~ species,
@@ -238,7 +250,6 @@ manova_table <- data.frame(
 
 knitr::kable(
   manova_table,
-  caption = "MANOVA Results Using Pillai's Trace",
   col.names = c(
     "Test",
     "Pillai's Trace",
@@ -252,11 +263,11 @@ knitr::kable(
 )
 ```
 
-If the p-value associated with Pillai's Trace is below 0.05, you reject the null hypothesis.
-
-This indicates that the penguin species differ significantly in their combined physical characteristics.
+After examining each physical characteristic individually, a one-way MANOVA was conducted to determine whether penguin species differed in their combined physical measurements. The four dependent variables are bill length, bill depth, flipper length, and body mass and species was the independent variable. The MANOVA results in @manova using Pillai's Trace indicate a statistically significant multivariate effect of species on the overall physical measurements. Because the p-value associated with Pillai's Trace < 2e-16 is below the significance level of 0.05, we reject the null hypothesis that the three penguin species have equal multivariate mean vectors. This indicates that the penguin species differ significantly in their combined physical characteristics.
 
 ```{r}
+#| label: follow
+#| tbl-cap: Univariate Follow-up Tests from MANOVA. Same results as with univariate ANOVAs.
 # Extract follow-up ANOVA results
 manova_aov <- summary.aov(manova_model)
 
@@ -283,7 +294,7 @@ manova_followup <- bind_rows(
       TRUE ~ ""
     )
   ) %>%
-  select(
+  dplyr::select(
     Variable,
     df,
     F_statistic,
@@ -300,16 +311,14 @@ knitr::kable(
     "P-value",
     "Significance"
   ),
-  caption = "Univariate Follow-up Tests from MANOVA",
   booktabs = TRUE
 )
 ```
 
-If the p-value associated with Pillai's Trace is below 0.05, you reject the null hypothesis.
-
-This indicates that the penguin species differ significantly in their combined physical characteristics.
 
 ```{r}
+#| label: boxm
+#| tbl-cap: Box's M-test for equality of covariance matrices
 # Box's M-test for equality of covariance matrices
 box_M <- boxM(
      penguins[, c(
@@ -342,18 +351,19 @@ knitr::kable(
     "P-value",
     "Significance"
   ),
-  caption = "Box's M Test for Homogeneity of Covariance Matrices",
   booktabs = TRUE
 )
 ```
 
 
+The Box's M test in @boxm was conducted to evaluate the MANOVA assumption of equal covariance matrices across the three penguin species. The test was statistically significant (p-value = 1.36e-08 < 0.001), indicating evidence that the covariance matrices differ across species. Therefore, the assumption of homogeneous covariance matrices was not satisfied.
 
-Box's M test was conducted to assess the homogeneity of variance-covariance matrices across penguin species. The test was statistically significant, χ²(20) = 76.795, p < 0.001, indicating evidence that the covariance matrices differ across species. Therefore, the assumption of homogeneous covariance matrices was not satisfied.
 # Discussion
 
+This paper explored whether Adelie, Chinstrap, and Gentoo penguins differ in their physical characteristics by comparing four separate univaraite ANOVAs with a multivariate ANOVA, MANOVA. The results showed statistically significant differences among the three penguin species for all four physical measurements bill length, bill depth, flipper length, and body mass. All four univariate ANOVAs produced p-values below 0.01. Similarly, the MANOVA using Pillai's Trace showed a statistically significant difference in the combined physical measurements across species. Comparing the univariate ANOVAs with the MANOVA reveals that both approaches identify statistically significant differences among the three penguin species. Although both approaches lead to the same general conclusion, they provide different information. The individual ANOVAs demonstrate that bill length, bill depth, flipper length, and body mass each differ across species when examined separately. In contrast, the MANOVA evaluates differences in the combined physical measurements while accounting for the relationships among the dependent variables.
 
+One potential limitation of this study is the violation of the equal covariance matrices assumption, as indicated by the significant Box's M test (p < .001). This suggests that the covariance structures of the four physical measurements differ across penguin species. However, Pillai's Trace is generally considered more robust to certain violations of MANOVA assumptions than alternative test statistics. Additionally, MANOVA tests of mean differences can be reasonably robust to some departures from multivariate normality, particularly with sufficiently large samples. Therefore, the significant Box's M result does not invalidate the MANOVA findings, although it does suggest that they should be interpreted with some caution. Another limitation is that the analysis only examines four physical characteristics and does not account for other factors that may influence penguin measurements, such as sex, age, or island. These additional factors could contribute to differences in physical characteristics within and between species.
 
-This case study demonstrates the advantages of multivariate data analysis by comparing separate univariate ANOVAs with MANOVA when examining physical differences among penguin species. While individual ANOVAs provide information about differences in specific physical measurements, MANOVA evaluates whether species differ across multiple characteristics simultaneously while accounting for relationships among the dependent variables. This provides a more comprehensive understanding of group differences and reduces the need to rely exclusively on multiple independent hypothesis tests. Therefore, multivariate analysis is particularly valuable when research questions involve several related outcome variables.
+Overall, this case study demonstrates the advantages of multivariate data analysis by comparing separate univariate ANOVAs with MANOVA when examining physical differences among penguin species. While individual ANOVAs provide information about differences in specific physical measurements, MANOVA evaluates whether species differ across multiple characteristics simultaneously while accounting for relationships among the dependent variables. This provides a more comprehensive understanding of group differences and reduces the need to rely exclusively on multiple independent hypothesis tests. Therefore, multivariate analysis is particularly valuable when research questions involve several related outcome variables.
 
 # References
