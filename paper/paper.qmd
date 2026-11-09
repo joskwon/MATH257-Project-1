@@ -144,7 +144,7 @@ To compare the univariate and multivariate approaches, I will examine the statis
 # Results
 
 ```{r}
-#| label: uni_anova
+#| label: tbl-uni_anova
 #| tbl-cap: One-Way ANOVA Results by Penguin Species
 # Four univariate ANOVA
 anova_bill_length <- aov(bill_length_mm ~ species, data = penguins)
@@ -210,13 +210,13 @@ knitr::kable(
 
 Four separate one-way ANOVAs were conducted to determine whether mean bill length, bill depth, flipper length, and body mass differed across the three penguin species.
 
-The results in @uni_anova show that all four physical characteristics showed statistically significant differences across the three penguin species. Bill length difference by species was significant at the 0.05 level, with an F-Statistic of 410.600 and a p-value < 2e-16. Similarly, bill depth showed a significant difference with an F-Statistic of 359.789 and a p-value < 2e-16. Flipper length also differed significantly across species with an F-Statistic of 594.802 and a p-value < 2e-16. Finally, body mass showed a statistically significant difference with an F-Statistic of 343.626 and a p-value < 2e-16.
+The results in @tbl-uni_anova show that all four physical characteristics showed statistically significant differences across the three penguin species. Bill length difference by species was significant at the 0.05 level, with an F-Statistic of 410.600 and a p-value < 2e-16. Similarly, bill depth showed a significant difference with an F-Statistic of 359.789 and a p-value < 2e-16. Flipper length also differed significantly across species with an F-Statistic of 594.802 and a p-value < 2e-16. Finally, body mass showed a statistically significant difference with an F-Statistic of 343.626 and a p-value < 2e-16.
 
 These findings suggest that penguin species differ in each of the four physical characteristics and we reject the null hypothesis that all three species have equal population means for each physical characteristic. However, conducting separate ANOVAs does not directly evaluate whether species differ in their combined physical measurements.
 
 
 ```{r}
-#| label: manova
+#| label: tbl-manova
 #| tbl-cap: MANOVA Results Using Pillai's Trace
 # Mulitivariate MANOVA
 manova_model <- manova(
@@ -263,10 +263,10 @@ knitr::kable(
 )
 ```
 
-After examining each physical characteristic individually, a one-way MANOVA was conducted to determine whether penguin species differed in their combined physical measurements. The four dependent variables are bill length, bill depth, flipper length, and body mass and species was the independent variable. The MANOVA results in @manova using Pillai's Trace indicate a statistically significant multivariate effect of species on the overall physical measurements. Because the p-value associated with Pillai's Trace < 2e-16 is below the significance level of 0.05, we reject the null hypothesis that the three penguin species have equal multivariate mean vectors. This indicates that the penguin species differ significantly in their combined physical characteristics.
+After examining each physical characteristic individually, a one-way MANOVA was conducted to determine whether penguin species differed in their combined physical measurements. The four dependent variables are bill length, bill depth, flipper length, and body mass and species was the independent variable. The MANOVA results in @tbl-manova using Pillai's Trace indicate a statistically significant multivariate effect of species on the overall physical measurements. Because the p-value associated with Pillai's Trace < 2e-16 is below the significance level of 0.05, we reject the null hypothesis that the three penguin species have equal multivariate mean vectors. This indicates that the penguin species differ significantly in their combined physical characteristics.
 
 ```{r}
-#| label: follow
+#| label: tbl-follow
 #| tbl-cap: Univariate Follow-up Tests from MANOVA. Same results as with univariate ANOVAs.
 # Extract follow-up ANOVA results
 manova_aov <- summary.aov(manova_model)
@@ -317,7 +317,7 @@ knitr::kable(
 
 
 ```{r}
-#| label: boxm
+#| label: tbl-boxm
 #| tbl-cap: Box's M-test for equality of covariance matrices
 # Box's M-test for equality of covariance matrices
 box_M <- boxM(
@@ -356,7 +356,7 @@ knitr::kable(
 ```
 
 
-The Box's M test in @boxm was conducted to evaluate the MANOVA assumption of equal covariance matrices across the three penguin species. The test was statistically significant (p-value = 1.36e-08 < 0.001), indicating evidence that the covariance matrices differ across species. Therefore, the assumption of homogeneous covariance matrices was not satisfied.
+The Box's M test in @tblboxm was conducted to evaluate the MANOVA assumption of equal covariance matrices across the three penguin species. The test was statistically significant (p-value = 1.36e-08 < 0.001), indicating evidence that the covariance matrices differ across species. Therefore, the assumption of homogeneous covariance matrices was not satisfied.
 
 # Discussion
 
